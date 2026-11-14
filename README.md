@@ -8,13 +8,14 @@
 <br/><br/>
 
 <a href="#install"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/btn-install-dark.svg"><img src="docs/assets/btn-install-light.svg" height="44" alt="Install"></picture></a>
+<a href="#the-app"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/btn-app-dark.svg"><img src="docs/assets/btn-app-light.svg" height="44" alt="The app"></picture></a>
 <a href="#how-it-works"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/btn-how-dark.svg"><img src="docs/assets/btn-how-light.svg" height="44" alt="How it works"></picture></a>
-<a href="#commands"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/btn-commands-dark.svg"><img src="docs/assets/btn-commands-light.svg" height="44" alt="Commands"></picture></a>
 <a href="https://github.com/masterrr3470/keepcode/issues/new"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/btn-help-dark.svg"><img src="docs/assets/btn-help-light.svg" height="44" alt="Get help"></picture></a>
 
 <br/><br/>
 
 <a href="https://github.com/masterrr3470/keepcode/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/masterrr3470/keepcode/ci.yml?branch=main&style=flat-square&label=tests&labelColor=1B2A44&color=22D3EE" alt="Tests"></a>
+<img src="https://img.shields.io/badge/Windows-app-22D3EE?style=flat-square&labelColor=1B2A44" alt="Windows app">
 <img src="https://img.shields.io/badge/python-3.10%2B-22D3EE?style=flat-square&labelColor=1B2A44" alt="Python 3.10 or newer">
 <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-22D3EE?style=flat-square&labelColor=1B2A44" alt="MIT license"></a>
 
@@ -26,15 +27,30 @@
 
 I built keepcode after losing the code of a restaurant ordering app I was working on and having to rebuild it from scratch.
 
-Code rarely gets lost in a dramatic way. It is a project that never left the Downloads folder, a repository with no remote, a week of work nobody committed. keepcode is a small app that checks every project on your computer at once and backs up what is at risk to private GitHub repositories, without touching your files or your branches.
+Code rarely gets lost in a dramatic way. It is a project that never left the Downloads folder, a repository with no remote, a week of work nobody committed. keepcode is an app that checks every project on your computer at once and backs up what is at risk to private GitHub repositories, without touching your files or your branches.
+
+## The app
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/app-dark.svg">
+  <img src="docs/assets/app-light.svg" width="100%" alt="The keepcode app: a grid of squares for every project, the projects that need a backup with the reason next to each one, and one button that backs them up to private GitHub repositories.">
+</picture>
+
+Open keepcode and it starts looking straight away. A grid of squares lights up as it searches, one square per project, in the colour of how safe that project is. Then it lists the projects that need a backup, with the reason next to each one and the ones worth saving already selected. One button backs them all up.
+
+Everything else lives in the same window: connecting to GitHub with a short code, updating keepcode, choosing which folders to search and turning on the daily check. Nothing to type.
 
 <p align="center">
   <picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/feat-find-dark.svg"><img src="docs/assets/feat-find-light.svg" width="49%" alt="Finds every project: searches your whole computer and lists the projects that only exist on it"></picture>
-  <picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/feat-safe-dark.svg"><img src="docs/assets/feat-safe-light.svg" width="49%" alt="Never touches your work: unsaved work goes to a keepcode branch, your files and branches stay as they are"></picture>
+  <picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/feat-oneclick-dark.svg"><img src="docs/assets/feat-oneclick-light.svg" width="49%" alt="Backs up in one click: choose the projects and press one button, each one gets its own private repository"></picture>
 </p>
 <p align="center">
+  <picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/feat-safe-dark.svg"><img src="docs/assets/feat-safe-light.svg" width="49%" alt="Never touches your work: unsaved work goes to a keepcode branch, your files and branches stay as they are"></picture>
   <picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/feat-secrets-dark.svg"><img src="docs/assets/feat-secrets-light.svg" width="49%" alt="Keeps secrets out: leaves .env files and keys out, and stops when it finds a token in the code"></picture>
+</p>
+<p align="center">
   <picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/feat-daily-dark.svg"><img src="docs/assets/feat-daily-light.svg" width="49%" alt="Checks every day: a quiet daily check tells you when something is at risk"></picture>
+  <picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/feat-update-dark.svg"><img src="docs/assets/feat-update-light.svg" width="49%" alt="Updates itself: when a new version is out, one click downloads it, checks it and restarts"></picture>
 </p>
 
 ## Install
@@ -45,38 +61,26 @@ Code rarely gets lost in a dramatic way. It is a project that never left the Dow
 irm https://raw.githubusercontent.com/masterrr3470/keepcode/main/install.ps1 | iex
 ```
 
-It downloads the newest `keepcode.exe` from [Releases](https://github.com/masterrr3470/keepcode/releases), checks its SHA-256, adds shortcuts to the desktop and the Start menu, adds `keepcode` to your PATH and opens the app. You can also download the `.exe` from Releases and double-click it.
+It downloads the newest `keepcode.exe` from [Releases](https://github.com/masterrr3470/keepcode/releases), checks its SHA-256, adds keepcode to the desktop, the Start menu and your PATH, and opens the app. You can also download the `.exe` from Releases and double-click it.
 
 **macOS and Linux**, or Windows with Python:
 
 ```bash
 pipx install "keepcode[app] @ git+https://github.com/masterrr3470/keepcode"
+keepcode app
 ```
-
-Then run `keepcode app` for the window, or `keepcode` for the terminal version. Without `[app]` you get the terminal version only.
 
 keepcode needs [Git](https://git-scm.com/downloads). On Windows, if Git is missing, the app installs it for you with one click.
 
-## Quick start
+## First run
 
-Open **keepcode** from the desktop or the Start menu. The window does the rest:
+1. Open **keepcode** from the desktop or the Start menu.
+2. Wait a few seconds while it searches your computer.
+3. Check the list. Projects that look like copies of another folder, such as `app (1)`, are left unselected.
+4. Click **Back up**. The first time, keepcode opens GitHub in your browser: type the short code it shows and click **Authorize**. No tokens to create or paste.
+5. Each project goes to its own private repository, and the list shows what happened to each one.
 
-1. it scans your computer while a grid of squares lights up, one square per project, coloured by how safe it is;
-2. it lists what is at risk, with the reason next to each project and the ones worth backing up already selected;
-3. you click **Back up**. The first time, keepcode connects to GitHub in your browser: you type a short code and click **Authorize**, no tokens to copy;
-4. each project goes to its own private repository, and the list shows what happened to each one;
-5. it offers to check your projects every day.
-
-When a new version is out, a button appears at the top of the window. One click downloads it, checks it and restarts keepcode.
-
-Prefer the terminal? Type `keepcode` for the same steps in a guided mode, or use the commands directly:
-
-```bash
-keepcode scan             # see which projects are at risk
-keepcode backup           # choose projects and back them up
-keepcode schedule on      # check every day at 18:00
-keepcode update           # update to the newest version
-```
+At the end, keepcode offers to check your projects every day and tell you when something is at risk.
 
 ## What keepcode finds
 
@@ -119,12 +123,14 @@ git switch -c recovered origin/keepcode/main
 * writes your GitHub token to `.git/config` or the command line;
 * runs your git hooks.
 
-## Commands
+## In the terminal
+
+Everything the app does is also a command, for scripts and for people who prefer to type. In a terminal, `keepcode` on its own walks through the same steps as the app.
 
 | Command | What it does |
 | --- | --- |
-| `keepcode app` | Open the keepcode window. Double-clicking `keepcode.exe` does the same. |
-| `keepcode` | In a terminal, the guided mode: update, scan, back up and set up the daily check, step by step. |
+| `keepcode app` | Open the app window. Double-clicking `keepcode.exe` does the same. |
+| `keepcode` | The guided mode: update, scan, back up and set up the daily check, step by step. |
 | `keepcode scan` | List the projects at risk. `--all` also lists safe ones, `--json` prints JSON. |
 | `keepcode backup` | Choose projects and back them up. Pass folders to skip the choice. `--dry-run` only shows the plan. |
 | `keepcode check` | Scan and exit with code 1 when something is at risk. `--notify` shows a notification. |
@@ -134,7 +140,7 @@ git switch -c recovered origin/keepcode/main
 | `keepcode roots` | Choose the folders keepcode searches: `list`, `add`, `remove`, `reset`. |
 | `keepcode ignore` | Choose folders keepcode skips: `list`, `add`, `remove`. |
 | `keepcode config` | Change the search `--depth`, `--auto-backup` and `--auto-update` (`ask`, `auto` or `off`). |
-| `keepcode doctor` | Check the version, Git, the GitHub connection, the folders and the schedule. |
+| `keepcode doctor` | Check the version, Git, the app window, the GitHub connection, the folders and the schedule. |
 
 <details>
 <summary><b>Secrets</b></summary>
