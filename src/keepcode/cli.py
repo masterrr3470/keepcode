@@ -1052,7 +1052,7 @@ def config_command(
 def roots_list() -> None:
     """Show the folders keepcode searches."""
     for root in Config.load().roots:
-        console.print(escape(root))
+        console.print(escape(root), soft_wrap=True)
 
 
 @roots_app.command("add")
@@ -1102,7 +1102,7 @@ def ignore_list() -> None:
     if not ignored:
         console.print("No folders are ignored.")
     for folder in ignored:
-        console.print(escape(folder))
+        console.print(escape(folder), soft_wrap=True)
 
 
 @ignore_app.command("add")

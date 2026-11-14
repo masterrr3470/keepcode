@@ -1,5 +1,6 @@
 """The Python side of the app window. Nothing here opens a window or needs pywebview."""
 
+import os
 from pathlib import Path
 
 from conftest import new_repo, write
@@ -44,7 +45,7 @@ def test_scan_finds_projects_and_sends_them_once(home: Path):
     assert site["severity"] == "critical"
     assert site["fixable"] and site["createsRepo"]
     assert site["plan"] == "new private GitHub repository"
-    assert site["path"] == "~/site"
+    assert site["path"] == "~" + os.sep + "site"
     # Polling again with the same revision does not resend the list.
     assert "projects" not in api.poll(answer["rev"])
 
@@ -107,7 +108,7 @@ def test_skipping_a_project_removes_it_and_saves_the_folder(home: Path):
     api = make_api()
     site = by_name(scanned(api), "site")
     settings = api.ignore_project(site["id"])
-    assert settings["ignore"] == ["~/site"]
+    assert settings["ignore"] == ["~" + os.sep + "site"]
     assert all(p["id"] != site["id"] for p in api.poll(-1)["projects"])
     assert Config.load().ignored_keys()
     assert api.unignore(settings["ignoreFull"][0])["ignore"] == []
