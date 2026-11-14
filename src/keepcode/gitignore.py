@@ -53,6 +53,7 @@ BY_STACK: dict[str, list[str]] = {
     "PlatformIO": [".pio/"],
     "Unity": ["[Ll]ibrary/", "[Tt]emp/", "[Oo]bj/", "[Bb]uild/", "[Ll]ogs/", "[Uu]ser[Ss]ettings/"],
     "Godot": [".godot/"],
+    "FiveM": ["cache/", "txData/", "*.log"],
     "PHP": ["vendor/"],
     "Ruby": [".bundle/", "vendor/bundle/"],
 }

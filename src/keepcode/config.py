@@ -43,6 +43,17 @@ def normalize(path: str | Path) -> str:
     return os.path.normcase(os.path.abspath(os.path.expanduser(str(path))))
 
 
+def pretty_path(path: str | Path) -> str:
+    """Path with the home folder shortened to ~, for messages."""
+    text = str(path)
+    home = str(Path.home())
+    if normalize(text) == normalize(home):
+        return "~"
+    if normalize(text).startswith(normalize(home) + os.sep):
+        return "~" + text[len(home) :]
+    return text
+
+
 @dataclass
 class Config:
     roots: list[str] = field(default_factory=lambda: [str(Path.home())])
@@ -50,6 +61,7 @@ class Config:
     max_depth: int = 7
     auto_backup: bool = False
     schedule_time: str = "18:00"
+    auto_update: str = "ask"  # ask, auto or off
 
     @classmethod
     def load(cls) -> Config:
@@ -75,6 +87,8 @@ class Config:
         except (TypeError, ValueError):
             self.max_depth = 7
         self.auto_backup = bool(self.auto_backup)
+        if self.auto_update not in ("ask", "auto", "off"):
+            self.auto_update = "ask"
 
     def ignored_keys(self) -> set[str]:
         return {normalize(p) for p in self.ignore}

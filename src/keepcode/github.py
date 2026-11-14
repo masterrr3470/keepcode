@@ -5,6 +5,9 @@ Token lookup order:
 2. the GitHub CLI (`gh auth token`), when it is installed and logged in;
 3. the token saved with `keepcode login` in the system keychain
    (Windows Credential Manager, macOS Keychain, Secret Service on Linux).
+
+`keepcode login` uses GitHub's device flow: the user opens a page, types a
+short code and approves. No token has to be created or pasted by hand.
 """
 
 from __future__ import annotations
@@ -16,9 +19,12 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 import unicodedata
 import urllib.error
+import urllib.parse
 import urllib.request
+import webbrowser
 from dataclasses import dataclass
 from typing import Any
 
@@ -28,6 +34,17 @@ API = "https://api.github.com"
 KEYRING_SERVICE = "keepcode"
 KEYRING_USER = "github-token"
 ENV_VARS = ("KEEPCODE_GITHUB_TOKEN", "GITHUB_TOKEN", "GH_TOKEN")
+
+# Public identifier of the keepcode OAuth app on GitHub (not a secret).
+# KEEPCODE_CLIENT_ID overrides it, which is useful for forks.
+DEFAULT_CLIENT_ID = ""
+DEVICE_CODE_URL = "https://github.com/login/device/code"
+ACCESS_TOKEN_URL = "https://github.com/login/oauth/access_token"
+SCOPE = "repo"
+
+
+def client_id() -> str:
+    return os.environ.get("KEEPCODE_CLIENT_ID", "").strip() or DEFAULT_CLIENT_ID
 
 
 class GitHubError(RuntimeError):
@@ -220,6 +237,117 @@ class GitHub:
                 raise
             return Repo(data["full_name"], data["clone_url"], data["html_url"])
         raise GitHubError(422, f"Could not find a free repository name for '{base}'")
+
+
+# ---------------------------------------------------------------- device flow
+
+
+@dataclass
+class DeviceCode:
+    device_code: str
+    user_code: str
+    verification_uri: str
+    expires_in: int
+    interval: int
+
+
+def _post_form(url: str, data: dict[str, str], timeout: float = 20) -> dict[str, Any]:
+    request = urllib.request.Request(
+        url,
+        data=urllib.parse.urlencode(data).encode(),
+        method="POST",
+        headers={"Accept": "application/json", "User-Agent": f"keepcode/{__version__}"},
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            payload = json.loads(response.read() or b"{}")
+    except urllib.error.HTTPError as exc:
+        raise GitHubError(exc.code, str(exc.reason)) from exc
+    except urllib.error.URLError as exc:
+        raise GitHubError(0, f"Could not reach GitHub: {exc.reason}") from exc
+    except (TimeoutError, json.JSONDecodeError) as exc:
+        raise GitHubError(0, f"GitHub did not answer properly: {exc}") from exc
+    return payload if isinstance(payload, dict) else {}
+
+
+def start_device_flow(app_id: str, post=_post_form) -> DeviceCode:
+    data = post(DEVICE_CODE_URL, {"client_id": app_id, "scope": SCOPE})
+    if "device_code" not in data:
+        message = data.get("error_description") or data.get("error") or "unexpected answer"
+        if data.get("error") == "device_flow_disabled":
+            message = "Device flow is turned off for the keepcode GitHub app"
+        raise GitHubError(0, f"Could not start the GitHub login: {message}")
+    return DeviceCode(
+        device_code=data["device_code"],
+        user_code=data["user_code"],
+        verification_uri=data.get("verification_uri", "https://github.com/login/device"),
+        expires_in=int(data.get("expires_in", 900)),
+        interval=int(data.get("interval", 5)),
+    )
+
+
+def wait_for_token(app_id: str, code: DeviceCode, post=_post_form, sleep=time.sleep, clock=time.monotonic) -> str:
+    """Poll GitHub until the user approves, denies or the code expires."""
+    interval = max(code.interval, 1)
+    deadline = clock() + code.expires_in
+    while clock() < deadline:
+        sleep(interval)
+        data = post(
+            ACCESS_TOKEN_URL,
+            {
+                "client_id": app_id,
+                "device_code": code.device_code,
+                "grant_type": "urn:ietf:params:oauth:grant-type:device_code",
+            },
+        )
+        token = data.get("access_token")
+        if token:
+            return str(token)
+        error = data.get("error")
+        if error == "authorization_pending":
+            continue
+        if error == "slow_down":
+            interval = int(data.get("interval", interval + 5))
+            continue
+        if error == "access_denied":
+            raise GitHubError(0, "The login was cancelled on GitHub")
+        if error == "expired_token":
+            break
+        raise GitHubError(0, f"GitHub login failed: {data.get('error_description') or error or 'unknown error'}")
+    raise GitHubError(0, "The code expired before it was approved. Run keepcode login again.")
+
+
+def open_browser(url: str) -> bool:
+    try:
+        return bool(webbrowser.open(url, new=2))
+    except Exception:  # noqa: BLE001 - no browser is not an error
+        return False
+
+
+def copy_to_clipboard(text: str) -> bool:
+    """Best effort: put the login code on the clipboard."""
+    if sys.platform == "win32":
+        command = ["clip"]
+    elif sys.platform == "darwin":
+        command = ["pbcopy"]
+    elif shutil.which("wl-copy"):
+        command = ["wl-copy"]
+    elif shutil.which("xclip"):
+        command = ["xclip", "-selection", "clipboard"]
+    else:
+        return False
+    try:
+        result = subprocess.run(
+            command,
+            input=text,
+            text=True,
+            capture_output=True,
+            timeout=5,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0) if sys.platform == "win32" else 0,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+    return result.returncode == 0
 
 
 class RepoCreator:

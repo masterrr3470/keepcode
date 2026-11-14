@@ -5,16 +5,17 @@ build-backend = "hatchling.build"
 [project]
 name = "keepcode"
 dynamic = ["version"]
-description = "Find every project on your computer that is not backed up, and fix it in one command."
+description = "Find every project on your computer that is not backed up, and back it up in one click."
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
 requires-python = ">=3.10"
 authors = [{ name = "Jorge Lourenço" }]
-keywords = ["git", "github", "backup", "cli", "developer-tools"]
+keywords = ["git", "github", "backup", "cli", "desktop-app", "developer-tools"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Environment :: Console",
+    "Environment :: Win32 (MS Windows)",
     "Intended Audience :: Developers",
     "Operating System :: Microsoft :: Windows",
     "Operating System :: MacOS",
@@ -31,9 +32,13 @@ dependencies = [
     "typer>=0.12",
     "rich>=13.7",
     "keyring>=24",
+    # The app window. Windows always has the engine it needs (Edge WebView2).
+    "pywebview>=5.3; sys_platform == 'win32'",
 ]
 
 [project.optional-dependencies]
+# The window on macOS and Linux (Linux also needs GTK or Qt, see the pywebview docs).
+app = ["pywebview>=5.3"]
 dev = ["pytest>=8", "ruff>=0.6"]
 
 [project.urls]

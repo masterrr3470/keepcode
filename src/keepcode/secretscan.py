@@ -88,6 +88,9 @@ RULES = [
     Rule("npm token", re.compile(r"\bnpm_[A-Za-z0-9]{36}\b")),
     Rule("npm auth token", re.compile(r"_authToken\s*=\s*[^\s$][^\s]{8,}")),
     Rule("PyPI token", re.compile(r"\bpypi-AgEIcHlwaS5vcmc[A-Za-z0-9_-]{50,}\b")),
+    Rule("Cfx.re license key", re.compile(r"\bcfxk_[A-Za-z0-9_]{20,}\b")),
+    Rule("FiveM rcon password", re.compile(r"^\s*rcon_password\s+\"?[^\s\"#]{4,}", re.IGNORECASE)),
+    Rule("Steam Web API key", re.compile(r"steam_webApiKey\s+\"?[0-9A-Fa-f]{32}\b")),
     Rule("SendGrid key", re.compile(r"\bSG\.[A-Za-z0-9_-]{22}\.[A-Za-z0-9_-]{43}\b")),
     Rule("Telegram bot token", re.compile(r"\b\d{8,10}:AA[A-Za-z0-9_-]{33}\b")),
     Rule(

@@ -47,6 +47,14 @@ class Plan:
     creates_repo: bool = False
 
 
+def describe(plan: Plan) -> str:
+    """One short line about what a backup will do."""
+    project = plan.project
+    if plan.creates_repo:
+        return "new private GitHub repository"
+    return f"save to {project.remote or 'origin'}/{BACKUP_PREFIX}{project.branch or 'detached-HEAD'}"
+
+
 @dataclass
 class Result:
     project: Project
@@ -210,6 +218,9 @@ class Engine:
                 gitignore_file.write_text(original, encoding="utf-8")
             raise
 
+        kept_out = self._ignored_secrets(path)
+        if kept_out:
+            details.append("Kept out (secret files): " + ", ".join(kept_out[:4]) + ("..." if len(kept_out) > 4 else ""))
         details.append(f"First commit created on {branch}")
         if project.remote is None:
             return self._publish_new_repo(project, details, push_args=["-u", "origin", branch])
@@ -303,6 +314,14 @@ class Engine:
             if secretscan.is_secret_filename(name) or _file_size(path / name) > MAX_FILE_BYTES:
                 excluded.append(name)
         return excluded
+
+    def _ignored_secrets(self, path: Path) -> list[str]:
+        """Secret files that exist in the folder but stay out of the repository."""
+        try:
+            out = git.run(["ls-files", "-z", "--others", "--ignored", "--exclude-standard", "--directory"], path)
+        except git.GitError:
+            return []
+        return sorted(name for name in out.split("\0") if name and secretscan.is_secret_filename(name.rstrip("/")))
 
     def _check_secrets(self, path: Path, files: list[str]) -> None:
         findings = secretscan.scan_files(path, files)

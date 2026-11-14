@@ -75,7 +75,7 @@ def test_backup_without_token_explains_login(home: Path):
 
 
 def test_backup_end_to_end(home: Path, creator, monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setattr(cli_module, "github_creator", lambda required: creator)
+    monkeypatch.setattr(cli_module, "github_creator", lambda required, **kwargs: creator)
     project = home / "code" / "app"
     write(project / "pyproject.toml")
     write(project / "main.py", "print('hi')\n")
@@ -86,7 +86,7 @@ def test_backup_end_to_end(home: Path, creator, monkeypatch: pytest.MonkeyPatch)
 
 
 def test_backup_all_from_scan(home: Path, creator, monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setattr(cli_module, "github_creator", lambda required: creator)
+    monkeypatch.setattr(cli_module, "github_creator", lambda required, **kwargs: creator)
     write(home / "code" / "one" / "pyproject.toml")
     write(home / "code" / "two" / "package.json", "{}")
     result = invoke("backup", "--all", "--yes")
@@ -96,7 +96,7 @@ def test_backup_all_from_scan(home: Path, creator, monkeypatch: pytest.MonkeyPat
 
 
 def test_backup_needs_yes_when_not_interactive(home: Path, creator, monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setattr(cli_module, "github_creator", lambda required: creator)
+    monkeypatch.setattr(cli_module, "github_creator", lambda required, **kwargs: creator)
     write(home / "code" / "one" / "pyproject.toml")
     result = runner.invoke(app, ["backup", str(home / "code" / "one")])
     assert result.exit_code == 2
@@ -133,7 +133,7 @@ def test_config_command(home: Path):
 def test_auto_backup_in_check_saves_work(home: Path, bare, creator, monkeypatch: pytest.MonkeyPatch):
     from conftest import sh
 
-    monkeypatch.setattr(cli_module, "github_creator", lambda required: creator)
+    monkeypatch.setattr(cli_module, "github_creator", lambda required, **kwargs: creator)
     remote = bare("app")
     repo = new_repo(home / "code" / "app")
     sh(repo, "remote", "add", "origin", str(remote))
