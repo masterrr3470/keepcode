@@ -3,14 +3,15 @@
 from __future__ import annotations
 
 import os
+import re
 from collections.abc import Callable, Iterable
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from keepcode import git
-from keepcode.config import State, normalize
+from keepcode.config import State, normalize, pretty_path
 from keepcode.models import Issue, IssueKind, Project, Severity
-from keepcode.scanner import count_files, detect_stacks
+from keepcode.scanner import count_files, detect_stacks, display_name
 from keepcode.secretscan import is_secret_filename
 
 
@@ -20,7 +21,7 @@ def _plural(count: int, word: str) -> str:
 
 def analyze(path: Path, state: State | None = None) -> Project:
     path = Path(path)
-    project = Project(path=path, name=path.name or str(path), stacks=detect_stacks(path))
+    project = Project(path=path, name=display_name(path), stacks=detect_stacks(path))
 
     if not git.is_repo(path):
         top = git.toplevel(path)
@@ -160,7 +161,38 @@ def analyze_many(
             results.append(project)
             if on_done:
                 on_done(index)
-    return results
+    return mark_copies(results)
+
+
+_COPY_SUFFIX = re.compile(r"(\s*\(\d+\)|\s*-\s*(copy|copia|cópia)(\s*\d+)?)$", re.IGNORECASE)
+
+
+def _base_name(name: str) -> str:
+    return _COPY_SUFFIX.sub("", name.strip()).lower()
+
+
+def mark_copies(projects: list[Project]) -> list[Project]:
+    """Flag folders without git that look like copies of each other.
+
+    Two folders are copies when they have the same name (ignoring " (1)" or
+    " - copy") and the same number of files. The most recently changed one is
+    treated as the original.
+    """
+    groups: dict[tuple[str, int], list[Project]] = {}
+    for project in projects:
+        if project.has(IssueKind.NO_GIT) and project.file_count:
+            groups.setdefault((_base_name(project.name), project.file_count), []).append(project)
+    for group in groups.values():
+        if len(group) < 2:
+            continue
+        group.sort(key=lambda p: (-(p.last_activity or 0), len(str(p.path))))
+        original = group[0]
+        for copy in group[1:]:
+            copy.copy_of = original.path
+            copy.issues.append(
+                Issue(IssueKind.DUPLICATE, Severity.INFO, f"Looks like a copy of {pretty_path(original.path)}")
+            )
+    return projects
 
 
 def sort_projects(projects: list[Project]) -> list[Project]:

@@ -43,6 +43,7 @@ def test_folder_without_git_becomes_a_private_repository(home: Path, creator):
     assert sh(project_dir, "status", "--porcelain") == ""
     assert analyze(project_dir).severity == Severity.OK
     assert (project_dir / ".env").read_text() == "SECRET=1\n"
+    assert "Kept out (secret files): .env" in result.details
 
 
 def test_hardcoded_secret_blocks_and_rolls_back(home: Path, creator):

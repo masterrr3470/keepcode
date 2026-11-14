@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>keepcode</title>
+  <link rel="stylesheet" href="app.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-folder" viewBox="0 0 20 20"><path d="M2.5 5.5a2 2 0 0 1 2-2h3l2 2h6a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-11a2 2 0 0 1-2-2z"/></symbol>
+    <symbol id="i-skip" viewBox="0 0 20 20"><path d="M10 17.5a7.5 7.5 0 1 0 0-15 7.5 7.5 0 0 0 0 15zM4.7 4.7l10.6 10.6"/></symbol>
+    <symbol id="i-gear" viewBox="0 0 20 20"><path d="M10 12.6a2.6 2.6 0 1 0 0-5.2 2.6 2.6 0 0 0 0 5.2z"/><path d="M16.2 12.3l1.3 1-1.6 2.8-1.6-.6a6 6 0 0 1-1.6.9l-.2 1.7H9.3l-.3-1.7a6 6 0 0 1-1.5-.9l-1.6.6-1.6-2.8 1.3-1a6 6 0 0 1 0-1.8l-1.3-1 1.6-2.8 1.6.6a6 6 0 0 1 1.5-.9l.3-1.7h3.2l.2 1.7a6 6 0 0 1 1.6.9l1.6-.6 1.6 2.8-1.3 1a6 6 0 0 1 0 1.8z"/></symbol>
+    <symbol id="i-user" viewBox="0 0 20 20"><path d="M10 10a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM3.5 17.5c.8-3.3 3.4-5 6.5-5s5.7 1.7 6.5 5"/></symbol>
+    <symbol id="i-search" viewBox="0 0 20 20"><path d="M9 15.5a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13zM17.5 17.5l-3.9-3.9"/></symbol>
+    <symbol id="i-close" viewBox="0 0 20 20"><path d="M5 5l10 10M15 5L5 15"/></symbol>
+    <symbol id="i-check" viewBox="0 0 20 20"><path d="M4.5 10.5l3.5 3.5 7.5-8"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 20 20"><path d="M16.5 10a6.5 6.5 0 1 1-1.9-4.6M16.5 3.5v3.8h-3.8"/></symbol>
+    <symbol id="i-down" viewBox="0 0 20 20"><path d="M10 3.5v10M5.5 9.5l4.5 4.5 4.5-4.5M4 17h12"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 20 20"><path d="M10 4v12M4 10h12"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 20 20"><path d="M7 7h9.5v9.5H7zM13 7V3.5H3.5V13H7"/></symbol>
+    <symbol id="i-external" viewBox="0 0 20 20"><path d="M11 3.5h5.5V9M16.5 3.5L9 11M14 12.5v3a1 1 0 0 1-1 1H4.5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3"/></symbol>
+  </svg>
+
+  <header class="topbar">
+    <div class="brand" aria-label="keepcode">
+      <svg class="mark" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" class="mark-bg"/><rect x="13" y="16" width="16" height="9" rx="3" class="mark-fg"/><rect x="13" y="21" width="38" height="28" rx="5" class="mark-fg"/><path d="M24 35.5l5.5 5.5L41 29.5" class="mark-check"/></svg>
+      <span class="wordmark">keepcode</span>
+    </div>
+    <div class="top-actions">
+      <button class="pill pill-update" id="update-pill" hidden></button>
+      <button class="ghost" id="account-button"></button>
+      <button class="icon-button" id="settings-button" aria-label="Settings" title="Settings"><svg><use href="#i-gear"/></svg></button>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="overview" aria-live="polite">
+      <canvas id="field" aria-hidden="true"></canvas>
+      <div class="tooltip" id="tooltip" hidden></div>
+      <div class="headline-row">
+        <div>
+          <h1 id="headline">Looking for projects</h1>
+          <p class="sub" id="sub">Starting</p>
+        </div>
+        <div class="overview-actions">
+          <button class="secondary" id="scan-button"><svg><use href="#i-refresh"/></svg><span>Scan again</span></button>
+        </div>
+      </div>
+      <div class="legend" id="legend" hidden></div>
+      <div class="offer" id="daily-offer" hidden>
+        <p>Want keepcode to check your projects every day at <strong id="offer-time">18:00</strong> and tell you when something is at risk?</p>
+        <div class="offer-actions">
+          <button class="text" id="offer-dismiss">Not now</button>
+          <button class="primary small" id="offer-accept">Turn on the daily check</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="projects" id="projects" hidden>
+      <div class="list-head">
+        <div class="tabs" role="tablist">
+          <button role="tab" class="tab" data-filter="attention" aria-selected="true">Needs a backup <span class="count" id="count-attention">0</span></button>
+          <button role="tab" class="tab" data-filter="all" aria-selected="false">All projects <span class="count" id="count-all">0</span></button>
+        </div>
+        <label class="search">
+          <svg><use href="#i-search"/></svg>
+          <input id="search" type="search" placeholder="Find a project" autocomplete="off" spellcheck="false">
+        </label>
+      </div>
+      <div class="list-columns" aria-hidden="true">
+        <span class="col-select"><button class="text tiny" id="select-all">Select all</button></span>
+        <span>Project</span><span>What happens</span><span class="col-when">Last change</span>
+      </div>
+      <div class="list" id="list" role="list"></div>
+      <p class="empty-list" id="empty-list" hidden></p>
+    </section>
+
+    <section class="blank" id="git-missing" hidden>
+      <h1>keepcode needs Git</h1>
+      <p>Git keeps the history of your projects, and keepcode uses it to back them up. Installing it takes a minute.</p>
+      <div class="blank-actions">
+        <button class="primary" id="install-git"><svg><use href="#i-down"/></svg><span>Install Git</span></button>
+        <button class="secondary" id="git-again">I installed it, check again</button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="actionbar" id="actionbar" hidden>
+    <div class="actionbar-text">
+      <strong id="selection-count">0 projects selected</strong>
+      <span id="selection-plan"></span>
+    </div>
+    <div class="actionbar-buttons">
+      <button class="text" id="clear-selection">Clear</button>
+      <button class="primary" id="backup-button">Back up</button>
+    </div>
+  </footer>
+
+  <div class="scrim" id="scrim" hidden></div>
+
+  <div class="dialog" id="login-dialog" role="dialog" aria-modal="true" aria-labelledby="login-title" hidden>
+    <button class="icon-button close" data-close aria-label="Close"><svg><use href="#i-close"/></svg></button>
+    <h2 id="login-title">Connect keepcode to GitHub</h2>
+    <p class="muted" id="login-intro">keepcode creates private repositories in your account to keep your projects safe. It never touches anything else.</p>
+    <div id="login-device">
+      <ol class="steps">
+        <li>Open the GitHub page below.</li>
+        <li>Type this code.</li>
+        <li>Click <strong>Authorize</strong>.</li>
+      </ol>
+      <div class="code-row">
+        <div class="code" id="login-code" aria-label="Login code"></div>
+        <button class="secondary small" id="copy-code"><svg><use href="#i-copy"/></svg><span>Copy</span></button>
+      </div>
+      <button class="primary wide" id="open-github"><svg><use href="#i-external"/></svg><span>Open github.com/login/device</span></button>
+      <p class="waiting" id="login-waiting"><span class="spinner" aria-hidden="true"></span>Waiting for you to approve on GitHub</p>
+    </div>
+    <div id="login-token" hidden>
+      <p>Create a token with the <strong>repo</strong> permission, then paste it here.</p>
+      <button class="secondary wide" id="create-token"><svg><use href="#i-external"/></svg><span>Create a token on GitHub</span></button>
+      <label class="field"><span>Token</span><input id="token-input" type="password" autocomplete="off" spellcheck="false" placeholder="ghp_..."></label>
+      <button class="primary wide" id="save-token">Connect</button>
+    </div>
+    <p class="error" id="login-error" hidden></p>
+    <div class="login-done" id="login-done" hidden><span class="done-mark"><svg><use href="#i-check"/></svg></span><p>Connected as <strong id="login-name"></strong></p></div>
+  </div>
+
+  <div class="dialog" id="update-dialog" role="dialog" aria-modal="true" aria-labelledby="update-title" hidden>
+    <button class="icon-button close" data-close aria-label="Close"><svg><use href="#i-close"/></svg></button>
+    <h2 id="update-title">keepcode <span id="update-version"></span> is ready</h2>
+    <p class="muted" id="update-text">The update downloads, checks that the file is genuine and restarts keepcode. It takes a few seconds.</p>
+    <div class="progress" id="update-progress" hidden><div class="progress-bar" id="update-bar"></div></div>
+    <p class="error" id="update-error" hidden></p>
+    <div class="dialog-actions">
+      <button class="text" id="update-notes">What changed</button>
+      <button class="primary" id="update-now">Update and restart</button>
+    </div>
+  </div>
+
+  <aside class="drawer" id="settings" role="dialog" aria-modal="true" aria-labelledby="settings-title" hidden>
+    <div class="drawer-head">
+      <h2 id="settings-title">Settings</h2>
+      <button class="icon-button" data-close aria-label="Close settings"><svg><use href="#i-close"/></svg></button>
+    </div>
+    <div class="drawer-body">
+      <section class="setting">
+        <h3>Folders keepcode searches</h3>
+        <ul class="paths" id="roots"></ul>
+        <button class="secondary small" id="add-root"><svg><use href="#i-plus"/></svg><span>Add a folder</span></button>
+      </section>
+      <section class="setting">
+        <h3>Skipped folders</h3>
+        <ul class="paths" id="ignored"></ul>
+      </section>
+      <section class="setting">
+        <div class="setting-line">
+          <div><h3>Daily check</h3><p class="muted" id="schedule-detail"></p></div>
+          <label class="switch"><input type="checkbox" id="schedule-toggle"><span></span></label>
+        </div>
+        <label class="field inline"><span>Time</span><input type="time" id="schedule-time" value="18:00"></label>
+      </section>
+      <section class="setting">
+        <div class="setting-line">
+          <div><h3>Save unsaved work every day</h3><p class="muted">During the daily check, uncommitted work and unpushed commits go to keepcode branches on GitHub.</p></div>
+          <label class="switch"><input type="checkbox" id="autobackup-toggle"><span></span></label>
+        </div>
+      </section>
+      <section class="setting">
+        <h3>Updates</h3>
+        <div class="segmented" id="update-mode">
+          <button data-mode="ask">Ask me</button><button data-mode="auto">Automatic</button><button data-mode="off">Off</button>
+        </div>
+      </section>
+      <section class="setting">
+        <h3>GitHub</h3>
+        <div class="setting-line"><p id="github-status" class="muted"></p><button class="secondary small" id="github-action"></button></div>
+      </section>
+      <section class="setting about">
+        <p><strong>keepcode <span id="about-version"></span></strong></p>
+        <p class="muted">Made by Jorge Lourenço. Open source under the MIT license.</p>
+        <div class="about-links">
+          <button class="text" data-url="https://github.com/masterrr3470/keepcode">Source code</button>
+          <button class="text" data-url="https://jorge-lourenco.vercel.app/">Jorge's portfolio</button>
+        </div>
+      </section>
+    </div>
+  </aside>
+
+  <div class="toast" id="toast" role="status" hidden></div>
+</body>
+</html>

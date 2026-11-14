@@ -14,6 +14,7 @@ import time
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 from keepcode.config import normalize
 
@@ -36,6 +37,7 @@ MARKERS: dict[str, str] = {
     "CMakeLists.txt": "C/C++",
     "platformio.ini": "PlatformIO",
     "fxmanifest.lua": "Lua",
+    "__resource.lua": "Lua",
     "project.godot": "Godot",
 }
 
@@ -129,7 +131,10 @@ PYTHON_FRAMEWORKS = [
     ("fastapi", "FastAPI"),
 ]
 
-IGNORE_IN_COUNT = SKIP_NAMES | {".git", ".venv", ".next", ".nuxt", ".svelte-kit", ".turbo", ".gradle"}
+IGNORE_IN_COUNT = SKIP_NAMES | {".git", ".venv", ".next", ".nuxt", ".svelte-kit", ".turbo", ".gradle", "cache"}
+
+# FiveM: generic names of the folder that holds server.cfg and resources/.
+GENERIC_SERVER_NAMES = {"server-data", "txdata", "data", "server", "fxserver"}
 
 
 @dataclass
@@ -154,8 +159,21 @@ def _is_link(entry: os.DirEntry[str]) -> bool:
     return False
 
 
+def is_fxserver_artifacts(names: set[str]) -> bool:
+    """The FXServer program itself (artifacts), which ships its own resources."""
+    return "FXServer.exe" in names or {"run.sh", "alpine"} <= names
+
+
+def is_fivem_server(names: set[str]) -> bool:
+    return "server.cfg" in names and "resources" in names
+
+
+def _is_bracket(name: str) -> bool:
+    return name.startswith("[") and name.endswith("]")
+
+
 def looks_like_project(path: Path, names: set[str]) -> bool:
-    if ".git" in names:
+    if ".git" in names or is_fivem_server(names):
         return True
     if any(marker in names for marker in MARKERS):
         return True
@@ -180,6 +198,7 @@ def find_projects(
     ignore: set[str] | None = None,
     max_depth: int = 7,
     on_progress: Callable[[int], None] | None = None,
+    progress: Any = None,
 ) -> tuple[list[Path], ScanStats]:
     """Return project folders under the given roots, sorted by path."""
     started = time.monotonic()
@@ -197,6 +216,10 @@ def find_projects(
             continue
         seen.add(key)
         stats.folders += 1
+        if progress is not None:
+            progress.folders = stats.folders
+            progress.current = str(folder)
+            progress.found = len(found)
         if on_progress and stats.folders % 200 == 0:
             on_progress(stats.folders)
         try:
@@ -205,6 +228,8 @@ def find_projects(
         except OSError:
             continue
         names = {entry.name for entry in entries}
+        if is_fxserver_artifacts(names):
+            continue  # FXServer binaries and its bundled resources are not the user's code
 
         if looks_like_project(folder, names):
             # The home folder and drive roots are always searched, never reported.
@@ -228,7 +253,53 @@ def find_projects(
             stack.append((Path(entry.path), depth + 1))
 
     stats.seconds = time.monotonic() - started
-    return _drop_nested(found), stats
+    projects = _drop_nested(group_fivem(found, home))
+    if progress is not None:
+        progress.found = len(projects)
+    return projects, stats
+
+
+def fivem_root(path: Path, home: str) -> Path | None:
+    """Server folder that a FiveM resource belongs to, or None when it stands alone.
+
+    Resources live under resources/ and in [category] folders; the server is the
+    folder that contains the outermost of those.
+    """
+    parts = path.parts
+    for index in range(1, len(parts) - 1):
+        part = parts[index]
+        if part.lower() == "resources" or _is_bracket(part):
+            root = Path(*parts[:index])
+            if normalize(root) == home or root.parent == root or _is_container(root):
+                return None
+            return root
+    return None
+
+
+def group_fivem(paths: list[Path], home: str) -> list[Path]:
+    """Report a FiveM server once instead of once per resource."""
+    result: list[Path] = []
+    for path in paths:
+        root = None
+        if not (path / ".git").exists() and _has_fivem_manifest(path):
+            root = fivem_root(path, home)
+        result.append(root or path)
+    unique: dict[str, Path] = {}
+    for path in result:
+        unique.setdefault(normalize(path), path)
+    return list(unique.values())
+
+
+def _has_fivem_manifest(path: Path) -> bool:
+    return (path / "fxmanifest.lua").exists() or (path / "__resource.lua").exists()
+
+
+def display_name(path: Path) -> str:
+    """A readable name: "VerticeServidor/server-data" instead of a bare "server-data"."""
+    name = path.name or str(path)
+    if name.lower() in GENERIC_SERVER_NAMES and path.parent.name and path.parent != path:
+        return f"{path.parent.name}/{name}"
+    return name
 
 
 def _drop_nested(paths: list[Path]) -> list[Path]:
@@ -308,6 +379,8 @@ def detect_stacks(project: Path) -> list[str]:
     if "Node.js" in stacks:
         for label in _node_frameworks(project):
             add(label)
+    if "server.cfg" in names or any(_is_bracket(n) for n in names) or _has_bracket_resources(project):
+        add("FiveM")
     if "src-tauri" in names:
         add("Tauri")
     if "Assets" in names and "ProjectSettings" in names:
@@ -317,6 +390,13 @@ def detect_stacks(project: Path) -> list[str]:
     # Most specific first: "React, Vite, Node.js" reads better than the reverse.
     generic = {"Node.js", "Python"}
     return [s for s in stacks if s not in generic] + [s for s in stacks if s in generic]
+
+
+def _has_bracket_resources(project: Path) -> bool:
+    try:
+        return any(_is_bracket(n) for n in os.listdir(project / "resources"))
+    except OSError:
+        return False
 
 
 def count_files(project: Path, limit: int = 100_000) -> tuple[int, float | None]:

@@ -29,6 +29,10 @@ def isolated(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     monkeypatch.setenv("HOME", str(home))
     monkeypatch.setenv("USERPROFILE", str(home))
     monkeypatch.setenv("KEEPCODE_HOME", str(tmp_path / "keepcode"))
+    monkeypatch.setenv("KEEPCODE_OFFLINE", "1")
+    monkeypatch.setenv("KEEPCODE_NO_ANIMATION", "1")
+    monkeypatch.delenv("KEEPCODE_CLIENT_ID", raising=False)
+    monkeypatch.delenv("KEEPCODE_JUST_UPDATED", raising=False)
     monkeypatch.setenv("GIT_CONFIG_GLOBAL", str(gitconfig))
     monkeypatch.setenv("GIT_CONFIG_NOSYSTEM", "1")
     for name in ("KEEPCODE_GITHUB_TOKEN", "GITHUB_TOKEN", "GH_TOKEN"):

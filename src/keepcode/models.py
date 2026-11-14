@@ -32,6 +32,7 @@ class IssueKind(str, Enum):
     UNPUSHED = "unpushed"
     STASHED = "stashed"
     TRACKED_SECRET = "tracked_secret"
+    DUPLICATE = "duplicate"
     GIT_ERROR = "git_error"
 
 
@@ -73,6 +74,7 @@ class Project:
     remote_url: str | None = None
     last_activity: float | None = None
     file_count: int | None = None
+    copy_of: Path | None = None
 
     @property
     def severity(self) -> Severity:
@@ -105,5 +107,6 @@ class Project:
             "remote_url": self.remote_url,
             "last_activity": self.last_activity,
             "file_count": self.file_count,
+            "copy_of": str(self.copy_of) if self.copy_of else None,
             "issues": [issue.to_dict() for issue in self.issues],
         }

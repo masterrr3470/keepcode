@@ -2,7 +2,7 @@
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/assets/hero-dark.svg">
-  <img src="docs/assets/hero-light.svg" width="100%" alt="keepcode: find every project on your computer that is not backed up, and fix it in one command">
+  <img src="docs/assets/hero-light.svg" width="100%" alt="keepcode: find every project on your computer that is not backed up, and back it up in one click">
 </picture>
 
 <br/><br/>
@@ -24,7 +24,9 @@
 
 ## Why
 
-Code rarely gets lost in a dramatic way. It is a project that never left the Downloads folder, a repository with no remote, a week of work nobody committed. keepcode checks every project on your computer at once and backs up what is at risk to GitHub, without touching your files or your branches.
+I built keepcode after losing the code of a restaurant ordering app I was working on and having to rebuild it from scratch.
+
+Code rarely gets lost in a dramatic way. It is a project that never left the Downloads folder, a repository with no remote, a week of work nobody committed. keepcode is a small app that checks every project on your computer at once and backs up what is at risk to private GitHub repositories, without touching your files or your branches.
 
 <p align="center">
   <picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/feat-find-dark.svg"><img src="docs/assets/feat-find-light.svg" width="49%" alt="Finds every project: searches your whole computer and lists the projects that only exist on it"></picture>
@@ -37,19 +39,43 @@ Code rarely gets lost in a dramatic way. It is a project that never left the Dow
 
 ## Install
 
-```bash
-pipx install git+https://github.com/masterrr3470/keepcode
+**Windows**: paste this in PowerShell. No Python and no administrator rights needed:
+
+```powershell
+irm https://raw.githubusercontent.com/masterrr3470/keepcode/main/install.ps1 | iex
 ```
 
-keepcode needs Python 3.10 or newer and [Git](https://git-scm.com/downloads). `pip install` works too, but [pipx](https://pipx.pypa.io) keeps keepcode in its own environment.
+It downloads the newest `keepcode.exe` from [Releases](https://github.com/masterrr3470/keepcode/releases), checks its SHA-256, adds shortcuts to the desktop and the Start menu, adds `keepcode` to your PATH and opens the app. You can also download the `.exe` from Releases and double-click it.
+
+**macOS and Linux**, or Windows with Python:
+
+```bash
+pipx install "keepcode[app] @ git+https://github.com/masterrr3470/keepcode"
+```
+
+Then run `keepcode app` for the window, or `keepcode` for the terminal version. Without `[app]` you get the terminal version only.
+
+keepcode needs [Git](https://git-scm.com/downloads). On Windows, if Git is missing, the app installs it for you with one click.
 
 ## Quick start
 
+Open **keepcode** from the desktop or the Start menu. The window does the rest:
+
+1. it scans your computer while a grid of squares lights up, one square per project, coloured by how safe it is;
+2. it lists what is at risk, with the reason next to each project and the ones worth backing up already selected;
+3. you click **Back up**. The first time, keepcode connects to GitHub in your browser: you type a short code and click **Authorize**, no tokens to copy;
+4. each project goes to its own private repository, and the list shows what happened to each one;
+5. it offers to check your projects every day.
+
+When a new version is out, a button appears at the top of the window. One click downloads it, checks it and restarts keepcode.
+
+Prefer the terminal? Type `keepcode` for the same steps in a guided mode, or use the commands directly:
+
 ```bash
-keepcode                  # see which projects are at risk
-keepcode login            # once, so keepcode can create private repositories
+keepcode scan             # see which projects are at risk
 keepcode backup           # choose projects and back them up
 keepcode schedule on      # check every day at 18:00
+keepcode update           # update to the newest version
 ```
 
 ## What keepcode finds
@@ -59,13 +85,13 @@ keepcode schedule on      # check every day at 18:00
   <img src="docs/assets/statuses-light.svg" width="100%" alt="Not backed up: the code only exists on this computer. At risk: uncommitted changes, unpushed commits or a tracked .env. Note: stashes, and work keepcode has already saved. Safe: everything is committed and pushed.">
 </picture>
 
-keepcode searches your home folder seven levels deep and skips dependencies, build output, system folders and hidden folders. A monorepo counts as one project.
+keepcode searches your home folder seven levels deep and skips dependencies, build output, system folders and hidden folders. A monorepo counts as one project, and so does a FiveM server with all its resources (the files that come with FXServer are skipped). Folders that look like copies of each other, such as `app` and `app (1)`, are flagged so you back up the original only.
 
 <details>
 <summary><b>Which folders count as a project</b></summary>
 <br>
 
-A folder with a `.git` folder, or with a typical project file such as `package.json`, `pyproject.toml`, `requirements.txt`, `manage.py`, `Cargo.toml`, `go.mod`, `pom.xml`, `build.gradle`, `composer.json`, `Gemfile`, `pubspec.yaml`, `CMakeLists.txt`, `platformio.ini`, `project.godot`, `.sln`, `.csproj` or `.ino`. A Unity project and an `index.html` next to its styles and scripts also count.
+A folder with a `.git` folder, or with a typical project file such as `package.json`, `pyproject.toml`, `requirements.txt`, `manage.py`, `Cargo.toml`, `go.mod`, `pom.xml`, `build.gradle`, `composer.json`, `Gemfile`, `pubspec.yaml`, `CMakeLists.txt`, `platformio.ini`, `project.godot`, `.sln`, `.csproj` or `.ino`. A Unity project, a FiveM server (a `server.cfg` next to `resources`) and an `index.html` next to its styles and scripts also count.
 
 </details>
 
@@ -97,15 +123,18 @@ git switch -c recovered origin/keepcode/main
 
 | Command | What it does |
 | --- | --- |
-| `keepcode scan` | List the projects at risk (plain `keepcode` does the same). `--all` also lists safe ones, `--json` prints JSON. |
+| `keepcode app` | Open the keepcode window. Double-clicking `keepcode.exe` does the same. |
+| `keepcode` | In a terminal, the guided mode: update, scan, back up and set up the daily check, step by step. |
+| `keepcode scan` | List the projects at risk. `--all` also lists safe ones, `--json` prints JSON. |
 | `keepcode backup` | Choose projects and back them up. Pass folders to skip the choice. `--dry-run` only shows the plan. |
 | `keepcode check` | Scan and exit with code 1 when something is at risk. `--notify` shows a notification. |
-| `keepcode login` | Save a GitHub token in the system keychain. `logout` removes it. |
+| `keepcode login` | Connect to GitHub in the browser with a short code. `logout` disconnects. |
+| `keepcode update` | Update to the newest version published on GitHub. |
 | `keepcode schedule on` | Check every day. `--time 18:00` sets the time, `off` stops it. |
 | `keepcode roots` | Choose the folders keepcode searches: `list`, `add`, `remove`, `reset`. |
 | `keepcode ignore` | Choose folders keepcode skips: `list`, `add`, `remove`. |
-| `keepcode config` | Change the search `--depth` and turn `--auto-backup` on or off. |
-| `keepcode doctor` | Check git, the token, the folders and the schedule. |
+| `keepcode config` | Change the search `--depth`, `--auto-backup` and `--auto-update` (`ask`, `auto` or `off`). |
+| `keepcode doctor` | Check the version, Git, the GitHub connection, the folders and the schedule. |
 
 <details>
 <summary><b>Secrets</b></summary>
@@ -114,23 +143,29 @@ git switch -c recovered origin/keepcode/main
 Before anything is committed or pushed, keepcode checks the files.
 
 * `.env` files (but not `.env.example`), private keys, keystores and service account files are left out, and added to `.gitignore` when keepcode creates the repository.
-* Tokens written in the code stop the backup. keepcode recognizes GitHub, GitLab, AWS, Google (including Gemini), OpenAI, Anthropic, Stripe, Slack, SendGrid, npm, PyPI, Telegram and Discord tokens, private keys and Supabase `service_role` keys. The public Supabase `anon` key is not reported.
+* Tokens written in the code stop the backup. keepcode recognizes GitHub, GitLab, AWS, Google (including Gemini), OpenAI, Anthropic, Stripe, Slack, SendGrid, npm, PyPI, Telegram and Discord tokens, private keys, Supabase `service_role` keys, and FiveM license keys, `rcon_password` and Steam Web API keys in `server.cfg`. The public Supabase `anon` key is not reported.
 
-When a secret is found, move it to a `.env` file, add `keepcode:allow` to the line if it is a false positive, or run `keepcode backup --allow-secrets`. Secret files are never backed up: keep them in a password manager.
+When a secret is found, move it to a `.env` file or add `keepcode:allow` to the line if it is a false positive. The repositories are private, so you can also click **Back up anyway** in the app, or run `keepcode backup --allow-secrets`. Secret files are never backed up: keep them in a password manager.
 
 </details>
 
 <details>
-<summary><b>GitHub token</b></summary>
+<summary><b>Connecting to GitHub</b></summary>
 <br>
 
-keepcode only needs a token to create new repositories, and they are always private. It looks for one in this order:
+keepcode only needs GitHub to create new repositories, and they are always private. The first time it needs one, the app (or `keepcode login` in a terminal) opens `github.com/login/device` in your browser and shows a short code, already copied to the clipboard. Type it, click **Authorize**, and keepcode keeps the login in Windows Credential Manager, macOS Keychain or Secret Service on Linux.
 
-1. the `KEEPCODE_GITHUB_TOKEN`, `GITHUB_TOKEN` or `GH_TOKEN` environment variables;
-2. the [GitHub CLI](https://cli.github.com), if you are logged in;
-3. the token saved with `keepcode login`, kept in Windows Credential Manager, macOS Keychain or Secret Service on Linux.
+keepcode also uses, in this order, the `KEEPCODE_GITHUB_TOKEN`, `GITHUB_TOKEN` or `GH_TOKEN` environment variables and the [GitHub CLI](https://cli.github.com) if you are logged in there. `keepcode login --token` accepts a token you created yourself.
 
-The simplest option is a classic token with the `repo` scope: [create one here](https://github.com/settings/tokens/new?scopes=repo&description=keepcode). A fine-grained token works if it can access all repositories with **Administration** and **Contents** set to read and write.
+</details>
+
+<details>
+<summary><b>Updates</b></summary>
+<br>
+
+Every new version is built by GitHub Actions and published in [Releases](https://github.com/masterrr3470/keepcode/releases) with a `SHA256SUMS.txt`. When you open keepcode it checks for a newer release and shows an **Update** button. It downloads the new `.exe`, verifies the checksum, swaps the file and restarts keepcode. If the download does not match, it is discarded and nothing changes.
+
+In the app, **Settings > Updates** chooses between asking, updating automatically and not checking. In a terminal, `keepcode config --auto-update auto` updates without asking, and `off` stops the check. Installed with pip or pipx, keepcode tells you the command that updates it instead.
 
 </details>
 
@@ -138,7 +173,7 @@ The simplest option is a classic token with the `repo` scope: [create one here](
 <summary><b>Daily check</b></summary>
 <br>
 
-`keepcode schedule on` runs a check once a day and shows a notification when a project is at risk. On Windows it uses the Task Scheduler, needs no administrator rights and never opens a window. On macOS and Linux it uses your crontab.
+`keepcode schedule on` runs a check once a day and shows a notification when a project is at risk. On Windows it uses the Task Scheduler, needs no administrator rights and runs without opening a window. On macOS and Linux it uses your crontab.
 
 The check only warns you. With `keepcode config --auto-backup` it also saves uncommitted and unpushed work to `keepcode/*` branches for projects that already have a remote. It never creates repositories on its own.
 
@@ -149,10 +184,12 @@ The check only warns you. With `keepcode config --auto-backup` it also saves unc
 <br>
 
 * New repositories are created on GitHub only. Existing remotes on any host work for `keepcode/*` branches.
+* The window uses Microsoft Edge WebView2, which comes with Windows 10 and 11. Where it is missing, keepcode opens in the terminal instead. On Linux the window also needs GTK or Qt (see the [pywebview docs](https://pywebview.flowrl.com/guide/installation.html)).
 * Stashes are reported but not backed up.
 * Files over 95 MB are left out, because GitHub rejects files over 100 MB. Git LFS is not handled.
 * Hidden folders are not searched. Add them with `keepcode roots add`.
 * On Linux, notifications from cron depend on your desktop session.
+* `keepcode.exe` is not signed yet, so the first time you open a downloaded copy Windows may show "Windows protected your PC". Click **More info** and **Run anyway**. The install command does not trigger this.
 
 </details>
 
@@ -169,9 +206,30 @@ pip install -e ".[dev]"
 pytest
 ```
 
-The tests create real repositories and local remotes in temporary folders, so they never touch GitHub. They run on Windows and Linux on every push.
+The tests create real repositories and local remotes in temporary folders, so they never touch GitHub. They run on Windows and Linux on every push, and GitHub Actions builds a test `keepcode.exe` you can download from the run.
+
+The app is a [pywebview](https://pywebview.flowrl.com) window. `src/keepcode/app/web` holds the page (plain HTML, CSS and JavaScript, no build step) and `src/keepcode/app/api.py` the Python side it calls, which the tests cover without opening a window. Set `KEEPCODE_DEBUG=1` to open the browser developer tools inside it.
+
+To build the executable on Windows: `pip install pyinstaller` and `python packaging/build.py`. It also opens the window once to check that it works. To publish a version, raise `__version__`, add it to `CHANGELOG.md` and push a tag such as `v1.2.0`. The release workflow tests it, builds the `.exe` and publishes it, and installed copies update themselves.
 
 </details>
+
+## About me
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/author-dark.svg">
+  <img src="docs/assets/author-light.svg" width="100%" alt="Jorge Lourenço, full-stack developer and programming student at Escola Profissional de Gaia, open to internships in Porto and Gaia">
+</picture>
+
+I like building complete products, from the database to the last animation. Besides keepcode, I have built **Komo**, QR code ordering for restaurants; **PulseSync**, a heart monitor connected to an ESP32; **Replai**, AI replies to business emails; and **E-Materia**, a learning platform with AI. You can try them on my portfolio.
+
+I'm open to an internship in Porto or Gaia, on site or hybrid. If keepcode saved one of your projects, I'd love to hear about it.
+
+<p>
+  <a href="https://jorge-lourenco.vercel.app/"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/btn-portfolio-dark.svg"><img src="docs/assets/btn-portfolio-light.svg" height="44" alt="Portfolio"></picture></a>
+  <a href="https://github.com/masterrr3470"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/btn-github-dark.svg"><img src="docs/assets/btn-github-light.svg" height="44" alt="GitHub profile"></picture></a>
+  <a href="mailto:lourencojorge428@gmail.com"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/btn-email-dark.svg"><img src="docs/assets/btn-email-light.svg" height="44" alt="Email"></picture></a>
+</p>
 
 <br>
 

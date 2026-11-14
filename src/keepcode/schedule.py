@@ -7,6 +7,7 @@ Linux use the user's crontab.
 from __future__ import annotations
 
 import csv
+import os
 import re
 import subprocess
 import sys
@@ -14,6 +15,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from keepcode.config import config_dir
+from keepcode.updater import executable, is_frozen
 
 TASK_NAME = "keepcode daily check"
 CRON_MARKER = "# keepcode daily check"
@@ -48,7 +50,27 @@ def _python_for_background() -> str:
 
 
 def command() -> list[str]:
+    if is_frozen():
+        return [str(executable()), "check", "--notify", "--quiet"]
     return [_python_for_background(), "-m", "keepcode", "check", "--notify", "--quiet"]
+
+
+def _headless_console() -> str | None:
+    """conhost.exe --headless runs a console program without showing a window.
+
+    Available on Windows 10 2004 (build 19041) and later. The standalone
+    executable is a console program, so without this a window would flash
+    every day when the check runs.
+    """
+    if sys.platform != "win32" or not is_frozen():
+        return None
+    try:
+        if sys.getwindowsversion().build < 19041:  # type: ignore[attr-defined]
+            return None
+    except AttributeError:
+        return None
+    conhost = Path(os.environ.get("SYSTEMROOT", r"C:\Windows")) / "System32" / "conhost.exe"
+    return str(conhost) if conhost.exists() else None
 
 
 def _run(args: list[str]) -> subprocess.CompletedProcess[str]:
@@ -69,13 +91,18 @@ def _run(args: list[str]) -> subprocess.CompletedProcess[str]:
 
 def _windows_task_command() -> str:
     parts = command()
+    host = _headless_console()
     line = f'"{parts[0]}" ' + " ".join(parts[1:])
+    if host:
+        line = f'"{host}" --headless {line}'
     if len(line) <= 260:
         return line
     # schtasks limits /TR to 261 characters: fall back to a small launcher script.
     launcher = config_dir() / "keepcode-check.cmd"
     launcher.parent.mkdir(parents=True, exist_ok=True)
     launcher.write_text(f'@echo off\r\n"{parts[0]}" {" ".join(parts[1:])}\r\n', encoding="utf-8")
+    if host:
+        return f'"{host}" --headless cmd.exe /c "{launcher}"'
     return f'"{launcher}"'
 
 
