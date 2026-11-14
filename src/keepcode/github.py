@@ -37,7 +37,7 @@ ENV_VARS = ("KEEPCODE_GITHUB_TOKEN", "GITHUB_TOKEN", "GH_TOKEN")
 
 # Public identifier of the keepcode OAuth app on GitHub (not a secret).
 # KEEPCODE_CLIENT_ID overrides it, which is useful for forks.
-DEFAULT_CLIENT_ID = ""
+DEFAULT_CLIENT_ID = "Ov23liC7DxQSt1gjxzPF"
 DEVICE_CODE_URL = "https://github.com/login/device/code"
 ACCESS_TOKEN_URL = "https://github.com/login/oauth/access_token"
 SCOPE = "repo"

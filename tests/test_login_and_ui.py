@@ -193,3 +193,8 @@ def test_animations_can_be_turned_off(monkeypatch):
     assert ui.animations_enabled(console) is False
     monkeypatch.delenv("KEEPCODE_NO_ANIMATION")
     assert ui.animations_enabled(console) is True
+
+
+def test_keepcode_ships_with_its_own_oauth_app():
+    """The browser login works out of the box; the Client ID is public, not a secret."""
+    assert gh.DEFAULT_CLIENT_ID.startswith("Ov23")

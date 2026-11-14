@@ -137,7 +137,10 @@ def test_open_url_only_opens_web_links(home: Path, monkeypatch):
     assert opened == ["https://github.com/masterrr3470/keepcode"]
 
 
-def test_login_without_a_client_id_falls_back_to_a_token(home: Path):
+def test_login_without_a_client_id_falls_back_to_a_token(home: Path, monkeypatch):
+    from keepcode import github as gh
+
+    monkeypatch.setattr(gh, "DEFAULT_CLIENT_ID", "")
     assert make_api().login_start() == {"state": "token"}
     assert make_api().login_token("  ")["state"] == "error"
 
