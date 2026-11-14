@@ -216,7 +216,7 @@ The tests create real repositories and local remotes in temporary folders, so th
 
 The app is a [pywebview](https://pywebview.flowrl.com) window. `src/keepcode/app/web` holds the page (plain HTML, CSS and JavaScript, no build step) and `src/keepcode/app/api.py` the Python side it calls, which the tests cover without opening a window. Set `KEEPCODE_DEBUG=1` to open the browser developer tools inside it.
 
-To build the executable on Windows: `pip install pyinstaller` and `python packaging/build.py`. It also opens the window once to check that it works. To publish a version, raise `__version__`, add it to `CHANGELOG.md` and push a tag such as `v1.2.0`. The release workflow tests it, builds the `.exe` and publishes it, and installed copies update themselves.
+To build the executable on Windows: `pip install pyinstaller` and `python packaging/build.py`. It also opens the window once to check that it works. To publish a version, raise `__version__`, add it to `CHANGELOG.md` and run the **Release** workflow from the Actions tab (pushing a tag such as `v1.2.0` works too). It tests the code, builds the `.exe`, publishes it, and installed copies update themselves.
 
 </details>
 
