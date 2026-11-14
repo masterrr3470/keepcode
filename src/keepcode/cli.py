@@ -48,6 +48,14 @@ from keepcode.models import Project, Severity
 from keepcode.notify import notify
 from keepcode.scanner import ScanStats, find_projects
 
+# Windows writes pipes and files in the old ANSI code page, which has no ■ and
+# crashes on it (keepcode scan > list.txt). Anything that is not a console is
+# written as UTF-8 instead. Consoles already get UTF-8 from Python.
+for _stream in (sys.stdout, sys.stderr):
+    with contextlib.suppress(Exception):
+        if not _stream.isatty() and (_stream.encoding or "").lower().replace("-", "") != "utf8":
+            _stream.reconfigure(encoding="utf-8", errors="replace")
+
 app = typer.Typer(
     name="keepcode",
     help="Find every project on your computer that is not backed up, and fix it.",

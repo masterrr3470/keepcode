@@ -175,3 +175,20 @@ def test_time_ago_and_short_path(home: Path):
     assert cli_module.time_ago(time.time()) == "just now"
     assert cli_module.time_ago(time.time() - 3 * 86400) == "3 days ago"
     assert cli_module.short_path(home / "code" / "x").startswith("~")
+
+
+def test_output_to_a_file_never_fails_on_the_square(home: Path):
+    """Windows pipes use an old code page without ■; keepcode must switch them to UTF-8."""
+    import os
+    import subprocess
+    import sys
+
+    write(home / "code" / "site" / "package.json", "{}")
+    env = dict(os.environ, PYTHONIOENCODING="cp1252", COLUMNS="100")
+    result = subprocess.run(
+        [sys.executable, "-m", "keepcode", "scan", "--path", str(home / "code")],
+        capture_output=True,
+        env=env,
+    )
+    assert result.returncode == 0, result.stderr.decode("utf-8", "replace")
+    assert "■".encode() in result.stdout
